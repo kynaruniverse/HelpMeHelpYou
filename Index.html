@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shape the Future — Nathan Gregoire</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <script>
+    const SUPABASE_URL = 'https://ycgncrswlnytiyusppxl.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InljZ25jcnN3bG55dGl5dXNwcHhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MjM4ODYsImV4cCI6MjA5MjI5OTg4Nn0.OhtIfCJijGr_zPl4Ykwpvhcll7L5-7FmEfEdgKs5dVw';
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --cream: #faf7f2;
+      --ink: #1a1612;
+      --warm: #c8956c;
+      --warm-light: #e8c9a8;
+      --muted: #7a6e65;
+      --border: #e2d9ce;
+      --card: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'Lato', sans-serif;
+      font-weight: 300;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* Noise texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    .wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Hero */
+    .hero {
+      padding: 80px 0 60px;
+      text-align: center;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      font-family: 'Lato', sans-serif;
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--warm);
+      border: 1px solid var(--warm-light);
+      border-radius: 100px;
+      padding: 6px 16px;
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(36px, 7vw, 56px);
+      font-weight: 400;
+      line-height: 1.15;
+      color: var(--ink);
+      margin-bottom: 20px;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--warm);
+    }
+
+    .hero-sub {
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 480px;
+      margin: 0 auto 36px;
+      line-height: 1.8;
+    }
+
+    .divider {
+      width: 48px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--warm), var(--warm-light));
+      margin: 0 auto 48px;
+      border-radius: 2px;
+    }
+
+    /* Intro card */
+    .intro-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 40px;
+      margin-bottom: 48px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+      animation: fadeUp 0.8s ease 0.1s both;
+    }
+
+    .intro-card p {
+      font-size: 15px;
+      color: #4a3f38;
+      margin-bottom: 14px;
+    }
+
+    .intro-card p:last-child { margin-bottom: 0; }
+
+    .intro-card strong { font-weight: 700; color: var(--ink); }
+
+    /* Form */
+    .form-wrap {
+      animation: fadeUp 0.8s ease 0.2s both;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      margin-top: 40px;
+    }
+
+    .section-label:first-child { margin-top: 0; }
+
+    .section-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--warm);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .section-label span {
+      font-weight: 700;
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--warm);
+    }
+
+    .question-block {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin-bottom: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .question-block:focus-within {
+      border-color: var(--warm);
+      box-shadow: 0 0 0 3px rgba(200,149,108,0.12);
+    }
+
+    .q-number {
+      font-family: 'Playfair Display', serif;
+      font-size: 11px;
+      color: var(--warm);
+      letter-spacing: 2px;
+      margin-bottom: 6px;
+    }
+
+    label {
+      display: block;
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    textarea, input[type="text"], input[type="email"] {
+      width: 100%;
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-family: 'Lato', sans-serif;
+      font-size: 14px;
+      font-weight: 300;
+      color: var(--ink);
+      resize: vertical;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+
+    textarea:focus, input[type="text"]:focus, input[type="email"]:focus {
+      outline: none;
+      border-color: var(--warm);
+      background: #fff;
+    }
+
+    textarea { min-height: 90px; }
+
+    .radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 14px;
+      color: #4a3f38;
+    }
+
+    .radio-option:hover { border-color: var(--warm); background: #fff; }
+
+    .radio-option input[type="radio"] {
+      width: 16px; height: 16px;
+      accent-color: var(--warm);
+      flex-shrink: 0;
+    }
+
+    .follow-up-email {
+      margin-top: 12px;
+      display: none;
+    }
+
+    .follow-up-email.visible { display: block; }
+
+    /* Submit */
+    .submit-wrap {
+      margin-top: 40px;
+      margin-bottom: 80px;
+      text-align: center;
+    }
+
+    .submit-btn {
+      background: var(--ink);
+      color: var(--cream);
+      border: none;
+      border-radius: 100px;
+      padding: 16px 48px;
+      font-family: 'Lato', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .submit-btn:hover {
+      background: var(--warm);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(200,149,108,0.35);
+    }
+
+    .submit-btn:active { transform: translateY(0); }
+
+    .submit-btn:disabled {
+      background: var(--muted);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .submit-note {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 14px;
+    }
+
+    /* Success */
+    .success-screen {
+      display: none;
+      text-align: center;
+      padding: 80px 0;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .success-screen.visible { display: block; }
+
+    .success-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, var(--warm), #e8a87c);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 24px;
+      box-shadow: 0 8px 24px rgba(200,149,108,0.3);
+    }
+
+    .success-screen h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      font-weight: 400;
+      margin-bottom: 12px;
+    }
+
+    .success-screen p {
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    /* Error */
+    .error-msg {
+      background: #fff0f0;
+      border: 1px solid #ffcccc;
+      color: #c0392b;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 14px;
+      margin-top: 16px;
+      display: none;
+    }
+
+    .error-msg.visible { display: block; }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      position: relative;
+      z-index: 1;
+    }
+
+    footer a { color: var(--warm); text-decoration: none; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 520px) {
+      .intro-card { padding: 24px 20px; }
+      .question-block { padding: 18px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-tag">5 minute survey</div>
+    <h1>Help me build<br>something <em>useful.</em></h1>
+    <p class="hero-sub">I'm Nathan Gregoire — a developer & entrepreneur. Before I build anything, I want to make sure it actually solves a real problem. That's where you come in.</p>
+    <div class="divider"></div>
+  </div>
+
+  <!-- Intro -->
+  <div class="intro-card">
+    <p>Hi! My name is <strong>Nathan Gregoire</strong> and I'm a developer and entrepreneur in the early stages of building a software product designed to make work life genuinely easier.</p>
+    <p>Before I write a single line of code, I'm doing something most builders skip — <strong>actually talking to people first.</strong> I want to understand the real frustrations people deal with every day at work, not just guess at them.</p>
+    <p>This survey takes about <strong>5 minutes</strong>. There are no right answers — blunt and honest is exactly what I need. If you know anyone at your company who might have strong opinions about workplace tools, I'd love if you shared this link with them too.</p>
+    <p>Thank you so much. This means more than you know. 🙏</p>
+  </div>
+
+  <!-- Form -->
+  <div class="form-wrap" id="formWrap">
+    <form id="surveyForm" novalidate>
+
+      <!-- Section 1 -->
+      <div class="section-label">
+        <div class="section-dot"></div>
+        <span>About Your Work</span>
+      </div>
+
+      <div class="question-block">
+        <div class="q-number">Q 01</div>
+        <label for="q1">What does a typical work day look like for you?</label>
+        <textarea id="q1" name="day_in_life" placeholder="Walk me through it — morning to end of day..." required></textarea>
+      </div>
+
+      <div class="question-block">
+        <div class="q-number">Q 02</div>
+        <label for="q2">What tools or software do you use most day-to-day?</label>
+        <textarea id="q2" name="tools_used" placeholder="e.g. Slack, Excel, Notion, a custom system..." required></textarea>
+      </div>
+
+      <!-- Section 2 -->
+      <div class="section-label">
+        <div class="section-dot"></div>
+        <span>The Real Stuff</span>
+      </div>
+
+      <div class="question-block">
+        <div class="q-number">Q 03</div>
+        <label for="q3">What's the most frustrating part of your job right now?</label>
+        <textarea id="q3" name="biggest_frustration" placeholder="Don't hold back — the more specific the better..." required></textarea>
+      </div>
+
+      <div class="question-block">
+        <div class="q-number">Q 04</div>
+        <label for="q4">What tasks do you do that feel like a waste of your time?</label>
+        <textarea id="q4" name="time_wasters" placeholder="Things you do because you have to, not because they're valuable..."></textarea>
+      </div>
+
+      <div class="question-block">
+        <div class="q-number">Q 05</div>
+        <label for="q5">Is there anything you do manually that you wish was automated?</label>
+        <textarea id="q5" name="automation_wishes" placeholder="Copy-pasting, repetitive reports, anything like that..."></textarea>
+      </div>
+
+      <!-- Section 3 -->
+      <div class="section-label">
+        <div class="section-dot"></div>
+        <span>Have You Tried to Fix It?</span>
+      </div>
+
+      <div class="question-block">
+        <div class="q-number">Q 06</div>
+        <label for="q6">Have you tried to solve any of these problems before? How?</label>
+        <textarea id="q6" name="tried_to_solve" placeholder="Workarounds, tools you tried, things that didn't quite work..."></textarea>
+      </div>
+
+      <div class="question-block">
+        <div class="q-number">Q 07</div>
+        <label for="q7">Roughly how much time per week do these frustrations cost you?</label>
+        <input type="text" id="q7" name="time_cost" placeholder="e.g. 2–3 hours, half a day, hard to say..." />
+      </div>
+
+      <!-- Section 4 -->
+      <div class="section-label">
+        <div class="section-dot"></div>
+        <span>Honest Opinions</span>
+      </div>
+
+      <div class="question-block">
+        <div class="q-number">Q 08</div>
+        <label for="q8">If a tool existed that solved this, would you or your company pay for it? What would it need to do?</label>
+        <textarea id="q8" name="willing_to_pay" placeholder="Be honest — what would make it a no-brainer to pay for?"></textarea>
+      </div>
+
+      <div class="question-block">
+        <div class="q-number">Q 09</div>
+        <label for="q9">Who else do you know that deals with the same frustrations?</label>
+        <textarea id="q9" name="who_else" placeholder="A job title, a team, an industry — you don't need to name anyone specifically..."></textarea>
+      </div>
+
+      <!-- Section 5 -->
+      <div class="section-label">
+        <div class="section-dot"></div>
+        <span>Staying in Touch</span>
+      </div>
+
+      <div class="question-block">
+        <div class="q-number">Q 10</div>
+        <label>Would you be open to me following up when I have something to show you?</label>
+        <div class="radio-group" id="followUpGroup">
+          <label class="radio-option">
+            <input type="radio" name="follow_up" value="yes" onchange="toggleEmail(true)" />
+            Yes, keep me in the loop!
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="follow_up" value="no" onchange="toggleEmail(false)" />
+            No thanks, but good luck!
+          </label>
+        </div>
+        <div class="follow-up-email" id="followUpEmail">
+          <input type="email" id="follow_up_email" name="follow_up_email" placeholder="Your email address..." />
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="submit-wrap">
+        <button type="submit" class="submit-btn" id="submitBtn">
+          Submit My Answers
+        </button>
+        <p class="submit-note">No account needed. No spam. Just helping something good get built.</p>
+        <div class="error-msg" id="errorMsg">Something went wrong saving your response. Please try again.</div>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Success -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">✓</div>
+    <h2>Thank you so much.</h2>
+    <p>Your answers have been saved and I'll read every single one.<br>If you left your email, I'll be in touch when there's something to show you.</p>
+    <p style="margin-top:16px; font-size:14px;">— Nathan Gregoire</p>
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    Built with care by <a href="#">Nathan Gregoire</a> · Questions? <a href="mailto:your@email.com">Reach out</a>
+  </div>
+</footer>
+
+<script>
+  // Init Supabase
+  const { createClient } = supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function toggleEmail(show) {
+    const el = document.getElementById('followUpEmail');
+    el.classList.toggle('visible', show);
+    if (!show) document.getElementById('follow_up_email').value = '';
+  }
+
+  document.getElementById('surveyForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const btn = document.getElementById('submitBtn');
+    const errMsg = document.getElementById('errorMsg');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+    errMsg.classList.remove('visible');
+
+    const form = e.target;
+    const followUp = form.querySelector('input[name="follow_up"]:checked');
+
+    const payload = {
+      day_in_life:           form.day_in_life.value.trim(),
+      tools_used:            form.tools_used.value.trim(),
+      biggest_frustration:   form.biggest_frustration.value.trim(),
+      time_wasters:          form.time_wasters.value.trim(),
+      automation_wishes:     form.automation_wishes.value.trim(),
+      tried_to_solve:        form.tried_to_solve.value.trim(),
+      time_cost:             form.time_cost.value.trim(),
+      willing_to_pay:        form.willing_to_pay.value.trim(),
+      who_else:              form.who_else.value.trim(),
+      follow_up:             followUp ? followUp.value : null,
+      follow_up_email:       form.follow_up_email.value.trim() || null,
+    };
+
+    // Validate required fields
+    if (!payload.day_in_life || !payload.tools_used || !payload.biggest_frustration) {
+      errMsg.textContent = 'Please answer at least questions 1, 2 and 3 before submitting.';
+      errMsg.classList.add('visible');
+      btn.disabled = false;
+      btn.textContent = 'Submit My Answers';
+      return;
+    }
+
+    const { error } = await db.from('responses').insert([payload]);
+
+    if (error) {
+      console.error(error);
+      errMsg.textContent = 'Something went wrong: ' + error.message;
+      errMsg.classList.add('visible');
+      btn.disabled = false;
+      btn.textContent = 'Submit My Answers';
+      return;
+    }
+
+    // Success
+    document.getElementById('formWrap').style.display = 'none';
+    document.getElementById('successScreen').classList.add('visible');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+</script>
+</body>
+</html>
